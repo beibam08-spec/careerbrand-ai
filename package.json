@@ -1,0 +1,15 @@
+{
+  "name": "careerbrand-ai",
+  "version": "10.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test",
+    "smoke": "node scripts/smoke.mjs",
+    "check": "npm run test && npm run smoke"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

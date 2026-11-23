@@ -1,0 +1,128 @@
+
+> careerbrand-ai@9.0.0 test
+> node --test
+
+TAP version 13
+# Subtest: agent parses vacancies and counts each skill at most once per vacancy
+ok 1 - agent parses vacancies and counts each skill at most once per vacancy
+  ---
+  duration_ms: 58.089924
+  type: 'test'
+  ...
+# Subtest: word boundaries distinguish Java from JavaScript
+ok 2 - word boundaries distinguish Java from JavaScript
+  ---
+  duration_ms: 0.65202
+  type: 'test'
+  ...
+# Subtest: absent data produces honest reports in all three languages
+ok 3 - absent data produces honest reports in all three languages
+  ---
+  duration_ms: 0.534346
+  type: 'test'
+  ...
+# Subtest: no fake totals or skill frequencies are returned
+ok 4 - no fake totals or skill frequencies are returned
+  ---
+  duration_ms: 0.466026
+  type: 'test'
+  ...
+# Subtest: three translations have identical dictionary keys
+ok 5 - three translations have identical dictionary keys
+  ---
+  duration_ms: 1.689837
+  type: 'test'
+  ...
+# Subtest: all site files exist and contain no third-party runtime dependencies
+ok 6 - all site files exist and contain no third-party runtime dependencies
+  ---
+  duration_ms: 11.506288
+  type: 'test'
+  ...
+# Subtest: server serves app and safely reports missing AI key
+ok 7 - server serves app and safely reports missing AI key
+  ---
+  duration_ms: 237.640462
+  type: 'test'
+  ...
+# Subtest: client renders every page in all three languages without a DOM runtime error
+ok 8 - client renders every page in all three languages without a DOM runtime error
+  ---
+  duration_ms: 14.991032
+  type: 'test'
+  ...
+# Subtest: v8 JSON import: synthetic source, privacy, data-derived skill counts and HTML-safe links
+ok 9 - v8 JSON import: synthetic source, privacy, data-derived skill counts and HTML-safe links
+  ---
+  duration_ms: 295.177988
+  type: 'test'
+  ...
+# Subtest: v8 JSON import rejects malformed datasets and protects restricted access
+ok 10 - v8 JSON import rejects malformed datasets and protects restricted access
+  ---
+  duration_ms: 184.237398
+  type: 'test'
+  ...
+# Subtest: v8 translated import labels exist and the sample JSON is conspicuously fictional
+ok 11 - v8 translated import labels exist and the sample JSON is conspicuously fictional
+  ---
+  duration_ms: 5.147316
+  type: 'test'
+  ...
+# Subtest: v7 visual assets are served as first-party files, with a no-cost default theme
+ok 12 - v7 visual assets are served as first-party files, with a no-cost default theme
+  ---
+  duration_ms: 158.341529
+  type: 'test'
+  ...
+# Subtest: Responses parsing and errors are safe
+ok 13 - Responses parsing and errors are safe
+  ---
+  duration_ms: 0.931641
+  type: 'test'
+  ...
+# Subtest: end-to-end local mock verifies chat, CV review, explicit consent, market data and errors
+ok 14 - end-to-end local mock verifies chat, CV review, explicit consent, market data and errors
+  ---
+  duration_ms: 212.459551
+  type: 'test'
+  ...
+# Subtest: shared demo code protects AI and vacancy calls, and real probe is explicitly triggered
+ok 15 - shared demo code protects AI and vacancy calls, and real probe is explicitly triggered
+  ---
+  duration_ms: 129.100461
+  type: 'test'
+  ...
+# Subtest: public deployment fails closed with a provider key but no strong demo code
+ok 16 - public deployment fails closed with a provider key but no strong demo code
+  ---
+  duration_ms: 49.890869
+  type: 'test'
+  ...
+# Subtest: v9 offline demo has grounded, explicitly synthetic skill counts in Kazakh, Russian and English
+ok 17 - v9 offline demo has grounded, explicitly synthetic skill counts in Kazakh, Russian and English
+  ---
+  duration_ms: 50.455701
+  type: 'test'
+  ...
+# Subtest: v9 AI in-process daily safety quota blocks second paid request without contacting provider
+ok 18 - v9 AI in-process daily safety quota blocks second paid request without contacting provider
+  ---
+  duration_ms: 184.842784
+  type: 'test'
+  ...
+# Subtest: v9 offline preview is a single openable file with same demo code and first-party images
+ok 19 - v9 offline preview is a single openable file with same demo code and first-party images
+  ---
+  duration_ms: 3.995181
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 836.165318

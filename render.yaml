@@ -1,0 +1,24 @@
+# CareerBrand AI v10: free-by-default Render blueprint.
+# IMPORTANT: Explicit plan: free avoids Render's paid default.
+# No paid AI credentials or private contact details are committed.
+services:
+  - type: web
+    name: careerbrand-ai-demo
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev --ignore-scripts
+    startCommand: node server.mjs
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: OPENAI_MODEL
+        value: gpt-4.1-mini
+      - key: AI_DAILY_CALL_LIMIT
+        value: "10"
+# OPTIONAL paid/external integrations added later in Render Dashboard (never in Git):
+# OPENAI_API_KEY, DEMO_ACCESS_CODE (16+ characters), HH_CONTACT_EMAIL.
+# If you add OPENAI_API_KEY or HH_CONTACT_EMAIL to the public server,
+# DEMO_ACCESS_CODE is required or the process deliberately refuses to start.

@@ -1,0 +1,27 @@
+{
+  "synthetic": true,
+  "source": "SYNTHETIC CLASSROOM TEST DATA — NOT REAL VACANCIES",
+  "collectedAt": null,
+  "vacancies": [
+    {
+      "title": "Junior Data Analyst — оқу үлгісі",
+      "employer": "Демо компания A",
+      "requirements": "Excel, SQL және Python бойынша бастапқы білім. Оқу жобаларын көрсете білу."
+    },
+    {
+      "title": "BI Analyst — оқу үлгісі",
+      "employer": "Демо компания B",
+      "requirements": "SQL, Power BI, деректерді талдау және Excel бойынша практикалық тапсырмалар."
+    },
+    {
+      "title": "Data Assistant — оқу үлгісі",
+      "employer": "Демо компания C",
+      "requirements": "Excel, Python және Tableau қолдану тәжірибесі пайдалы."
+    },
+    {
+      "title": "Junior Python Developer — оқу үлгісі",
+      "employer": "Демо компания D",
+      "requirements": "Python, Git және REST API ұғымдарын білу. Кіші оқу жобасы жеткілікті."
+    }
+  ]
+}

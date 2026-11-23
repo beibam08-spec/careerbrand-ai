@@ -1,0 +1,110 @@
+
+> careerbrand-ai@8.0.0 test
+> node --test
+
+TAP version 13
+# Subtest: agent parses vacancies and counts each skill at most once per vacancy
+ok 1 - agent parses vacancies and counts each skill at most once per vacancy
+  ---
+  duration_ms: 78.549519
+  type: 'test'
+  ...
+# Subtest: word boundaries distinguish Java from JavaScript
+ok 2 - word boundaries distinguish Java from JavaScript
+  ---
+  duration_ms: 0.975799
+  type: 'test'
+  ...
+# Subtest: absent data produces honest reports in all three languages
+ok 3 - absent data produces honest reports in all three languages
+  ---
+  duration_ms: 0.410606
+  type: 'test'
+  ...
+# Subtest: no fake totals or skill frequencies are returned
+ok 4 - no fake totals or skill frequencies are returned
+  ---
+  duration_ms: 0.239854
+  type: 'test'
+  ...
+# Subtest: three translations have identical dictionary keys
+ok 5 - three translations have identical dictionary keys
+  ---
+  duration_ms: 2.491718
+  type: 'test'
+  ...
+# Subtest: all site files exist and contain no third-party runtime dependencies
+ok 6 - all site files exist and contain no third-party runtime dependencies
+  ---
+  duration_ms: 12.210775
+  type: 'test'
+  ...
+# Subtest: server serves app and safely reports missing AI key
+ok 7 - server serves app and safely reports missing AI key
+  ---
+  duration_ms: 273.482738
+  type: 'test'
+  ...
+# Subtest: client renders every page in all three languages without a DOM runtime error
+ok 8 - client renders every page in all three languages without a DOM runtime error
+  ---
+  duration_ms: 10.321294
+  type: 'test'
+  ...
+# Subtest: v8 JSON import: synthetic source, privacy, data-derived skill counts and HTML-safe links
+ok 9 - v8 JSON import: synthetic source, privacy, data-derived skill counts and HTML-safe links
+  ---
+  duration_ms: 277.719764
+  type: 'test'
+  ...
+# Subtest: v8 JSON import rejects malformed datasets and protects restricted access
+ok 10 - v8 JSON import rejects malformed datasets and protects restricted access
+  ---
+  duration_ms: 262.584435
+  type: 'test'
+  ...
+# Subtest: v8 translated import labels exist and the sample JSON is conspicuously fictional
+ok 11 - v8 translated import labels exist and the sample JSON is conspicuously fictional
+  ---
+  duration_ms: 4.247515
+  type: 'test'
+  ...
+# Subtest: v7 visual assets are served as first-party files, with a no-cost default theme
+ok 12 - v7 visual assets are served as first-party files, with a no-cost default theme
+  ---
+  duration_ms: 227.982877
+  type: 'test'
+  ...
+# Subtest: Responses parsing and errors are safe
+ok 13 - Responses parsing and errors are safe
+  ---
+  duration_ms: 1.044086
+  type: 'test'
+  ...
+# Subtest: end-to-end local mock verifies chat, CV review, explicit consent, market data and errors
+ok 14 - end-to-end local mock verifies chat, CV review, explicit consent, market data and errors
+  ---
+  duration_ms: 246.872715
+  type: 'test'
+  ...
+# Subtest: shared demo code protects AI and vacancy calls, and real probe is explicitly triggered
+ok 15 - shared demo code protects AI and vacancy calls, and real probe is explicitly triggered
+  ---
+  duration_ms: 124.62063
+  type: 'test'
+  ...
+# Subtest: public deployment fails closed with a provider key but no strong demo code
+ok 16 - public deployment fails closed with a provider key but no strong demo code
+  ---
+  duration_ms: 63.093485
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 986.514497
