@@ -28,6 +28,7 @@ export function geminiError(status,payload){
   if(status===401 || status===403)return 'AI_KEY_INVALID';
   if(status===404 || /not found|not supported|unsupported model/i.test(String(payload?.error?.message || '')))return 'AI_MODEL_UNAVAILABLE';
   if(status===429)return 'AI_RATE_LIMIT';
+  if(status===503)return 'AI_BUSY';
   if(status>=500)return 'AI_UPSTREAM';
   return 'AI_UPSTREAM';
 }
@@ -50,24 +51,32 @@ export async function generateGemini({apiKey,model,instructions,input,outputForm
   if(!/^[a-z0-9._-]+$/i.test(model))return {ok:false,code:'AI_MODEL_UNAVAILABLE'};
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),timeoutMs);
-  // Tests may route to an in-process fake API. Never allow this in deployed environments.
   const url=process.env.NODE_ENV==='test' && process.env.TEST_GEMINI_ENDPOINT
     ? process.env.TEST_GEMINI_ENDPOINT
     : `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  const retryCount=Math.max(0,Math.min(2,Number.parseInt(process.env.GEMINI_503_RETRIES??'1',10)||0));
   try{
-    const response=await fetch(url,{method:'POST',signal:controller.signal,
-      headers:{'Content-Type':'application/json','x-goog-api-key':apiKey},
-      body:JSON.stringify(buildGeminiRequest({instructions,input,outputFormat,maxOutputTokens}))});
-    const payload=await response.json().catch(()=>({}));
-    if(!response.ok){logGeminiFailure({model,status:response.status,payload});return {ok:false,code:geminiError(response.status,payload)};}
-    const txt=geminiText(payload);
-    if(txt)return {ok:true,text:txt};
-    logGeminiFailure({model,status:response.status,payload,reason:'NO_TEXT_OUTPUT'});
-    return {ok:false,code:payload?.promptFeedback?.blockReason?'AI_BLOCKED':'AI_EMPTY'};
+    const body=JSON.stringify(buildGeminiRequest({instructions,input,outputFormat,maxOutputTokens}));
+    for(let attempt=0;attempt<=retryCount;attempt++){
+      if(controller.signal.aborted)return {ok:false,code:'AI_TIMEOUT'};
+      const response=await fetch(url,{method:'POST',signal:controller.signal,
+        headers:{'Content-Type':'application/json','x-goog-api-key':apiKey},body});
+      const payload=await response.json().catch(()=>({}));
+      if(response.status===503 && attempt<retryCount){
+        logGeminiFailure({model,status:503,payload,reason:`TEMPORARY_OVERLOAD_RETRY_${attempt+1}`});
+        await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));
+        continue;
+      }
+      if(!response.ok){logGeminiFailure({model,status:response.status,payload});return {ok:false,code:geminiError(response.status,payload)};}
+      const txt=geminiText(payload);
+      if(txt)return {ok:true,text:txt};
+      logGeminiFailure({model,status:response.status,payload,reason:'NO_TEXT_OUTPUT'});
+      return {ok:false,code:payload?.promptFeedback?.blockReason?'AI_BLOCKED':'AI_EMPTY'};
+    }
+    return {ok:false,code:'AI_BUSY'};
   }catch(e){
     const reason=e.name==='AbortError'?'TIMEOUT':'NETWORK_ERROR';
     logGeminiFailure({model,reason});
     return {ok:false,code:reason==='TIMEOUT'?'AI_TIMEOUT':'AI_NETWORK'};
-  }
-  finally{clearTimeout(timer)}
+  }finally{clearTimeout(timer)}
 }
