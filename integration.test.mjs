@@ -48,7 +48,7 @@ test('end-to-end local mock verifies chat, CV review, explicit consent, market d
   assert.ok(ready,'app server should start');
   const health=await(await fetch(root+'/api/health')).json();
   assert.equal(health.aiConfigured,true);
-  assert.equal(health.version,'10.0.0');assert.equal(health.jobsConfigured,true);
+  assert.equal(health.version,'11.0.0');assert.equal(health.jobsConfigured,true);
   const chat=await post(root+'/api/chat',{lang:'kk',messages:[{role:'user',content:'Маған CV туралы кеңес бер'}]});
   assert.equal(chat.status,200);assert.match((await chat.json()).reply,/Сәлем/);
   assert.ok(!calls[0].instructions.includes('Маған CV туралы кеңес бер'),'user text must not be put in system instructions');

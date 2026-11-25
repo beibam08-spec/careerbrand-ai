@@ -57,7 +57,7 @@ try{
     base=`http://127.0.0.1:${port}`;
     const env={...process.env,PORT:String(port),HOST:'127.0.0.1',NODE_ENV:'production'};
     // Explicit no-pay test: never call external integrations or use their keys.
-    for(const k of ['OPENAI_API_KEY','HH_CONTACT_EMAIL','DEMO_ACCESS_CODE','TEST_OPENAI_ENDPOINT','TEST_HH_ENDPOINT'])delete env[k];
+    for(const k of ['OPENAI_API_KEY','GEMINI_API_KEY','AI_PROVIDER','HH_CONTACT_EMAIL','DEMO_ACCESS_CODE','TEST_OPENAI_ENDPOINT','TEST_GEMINI_ENDPOINT','TEST_HH_ENDPOINT'])delete env[k];
     child=spawn(process.execPath,['server.mjs'],{cwd:root,env,stdio:['ignore','pipe','pipe']});
     child.stdout.on('data',d=>logs.push(d.toString()));
     child.stderr.on('data',d=>logs.push(d.toString()));
@@ -67,7 +67,7 @@ try{
   await check('Server health reports status, source, and version',async()=>{
     const r=await fetchWithTimeout('/api/health');assert(r.status===200,'health HTTP '+r.status);
     const d=await r.json();assert(d.ok===true,'health.ok is not true');
-    assert(typeof d.version==='string'&&d.version.startsWith('10.'),'unexpected version');
+    assert(typeof d.version==='string'&&d.version.startsWith('11.'),'unexpected version');
     assert(typeof d.aiConfigured==='boolean','missing AI configuration status');
     assert(typeof d.jobsConfigured==='boolean','missing jobs configuration status');
   });

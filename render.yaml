@@ -14,11 +14,17 @@ services:
         value: production
       - key: HOST
         value: 0.0.0.0
-      - key: OPENAI_MODEL
-        value: gpt-4.1-mini
+      - key: AI_PROVIDER
+        value: openai
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite
       - key: AI_DAILY_CALL_LIMIT
         value: "10"
 # OPTIONAL paid/external integrations added later in Render Dashboard (never in Git):
 # OPENAI_API_KEY, DEMO_ACCESS_CODE (16+ characters), HH_CONTACT_EMAIL.
 # If you add OPENAI_API_KEY or HH_CONTACT_EMAIL to the public server,
 # DEMO_ACCESS_CODE is required or the process deliberately refuses to start.
+
+# To enable Gemini free tier MANUALLY in Render Dashboard:
+# AI_PROVIDER=gemini, GEMINI_API_KEY=<private value>, DEMO_ACCESS_CODE=<24+ random characters>
+# Do not commit real keys; do not enable paid billing for a free classroom trial.

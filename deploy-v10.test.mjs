@@ -28,5 +28,5 @@ test('Git-ready package excludes local secrets and documents optional providers'
  const example=await read('.env.example');assert.match(example,/OPENAI_API_KEY/);
  assert.match(example,/does not automatically load/);
  const pkg=JSON.parse(await read('package.json'));
- assert.equal(pkg.version,'10.0.0');assert.ok(pkg.scripts.smoke);
+ assert.equal(pkg.version,'11.0.0');assert.ok(pkg.scripts.smoke);
 });

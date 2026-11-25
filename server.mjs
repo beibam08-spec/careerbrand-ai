@@ -4,17 +4,20 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { analyzeVacancies, ruleReport } from './agent.mjs';
-import { generateAI, CV_REVIEW_FORMAT, validateReview } from './openai.mjs';
+import { generateAI as generateOpenAI, CV_REVIEW_FORMAT, validateReview } from './openai.mjs';
+import { generateGemini } from './gemini.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
 // Bind locally by default: never expose an unprotected API key to the LAN.
 const HOST = process.env.HOST || '127.0.0.1';
-const API_KEY = process.env.OPENAI_API_KEY || '';
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
+const AI_PROVIDER = process.env.AI_PROVIDER === 'gemini' ? 'gemini' : 'openai';
+const API_KEY = AI_PROVIDER === 'gemini' ? (process.env.GEMINI_API_KEY || '') : (process.env.OPENAI_API_KEY || '');
+const MODEL = AI_PROVIDER === 'gemini' ? (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite') : (process.env.OPENAI_MODEL || 'gpt-4.1-mini');
+const generateAI = args => AI_PROVIDER === 'gemini' ? generateGemini(args) : generateOpenAI(args);
 const HH_CONTACT_EMAIL = process.env.HH_CONTACT_EMAIL || '';
 const HH_READY = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(HH_CONTACT_EMAIL);
-const VERSION = '10.0.0';
+const VERSION = '11.0.0';
 // Optional shared passcode for a private university demonstration.
 // Not an account system; protect production API quotas from casual public use.
 const DEMO_ACCESS_CODE = process.env.DEMO_ACCESS_CODE || '';
@@ -146,7 +149,7 @@ async function fetchJobsData(query, area) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15_000);
   try {
-    const resp = await fetch(api, { signal: controller.signal, headers: { 'User-Agent': `CareerBrandAI/10.0 (${HH_READY ? HH_CONTACT_EMAIL : 'testing@example.com'})`, 'HH-User-Agent': `CareerBrandAI/10.0 (${HH_READY ? HH_CONTACT_EMAIL : 'testing@example.com'})`, 'Accept': 'application/json' } });
+    const resp = await fetch(api, { signal: controller.signal, headers: { 'User-Agent': `CareerBrandAI/11.0 (${HH_READY ? HH_CONTACT_EMAIL : 'testing@example.com'})`, 'HH-User-Agent': `CareerBrandAI/11.0 (${HH_READY ? HH_CONTACT_EMAIL : 'testing@example.com'})`, 'Accept': 'application/json' } });
     if (!resp.ok) throw Object.assign(new Error('HH_UNAVAILABLE'), { code: 'HH_UNAVAILABLE', httpStatus: resp.status });
     const d = await resp.json();
     const vacancies = (Array.isArray(d.items) ? d.items : []).slice(0, 20).map(v => ({
@@ -244,7 +247,7 @@ async function probeAI(req,res) {
     instructions:'This is a technical connectivity diagnostic. Answer with a short greeting in Kazakh.',
     input:[{role:'user',content:'Байланыс сынағы: бір қысқа қазақша сәлем жаз.'}],maxOutputTokens:120,timeoutMs:18000});
   if(!r.ok)return json(res,{code:r.code},['AI_RATE_LIMIT','AI_DEMO_LIMIT'].includes(r.code)?429:502);
-  return json(res,{ok:true,status:'connected',model:MODEL,checkedAt:new Date().toISOString(),note:'One real provider request succeeded; this is not a test of Kazakh answer quality.'});
+  return json(res,{ok:true,status:'connected',provider:AI_PROVIDER,model:MODEL,checkedAt:new Date().toISOString(),note:'One real provider request succeeded; this is not a test of Kazakh answer quality.'});
 }
 const pages = new Set(['/', '/brand', '/cv', '/portfolio', '/video', '/market', '/assistant', '/research', '/media']);
 const files = new Map([['/styles.css',['styles.css','text/css; charset=utf-8']], ['/styles-v7.css',['styles-v7.css','text/css; charset=utf-8']], ['/app.js',['app.js','text/javascript; charset=utf-8']], ['/favicon.svg',['favicon.svg','image/svg+xml']]]);
@@ -256,7 +259,7 @@ files.set('/assets/example-vacancies-SYNTHETIC.json',['assets/example-vacancies-
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-    if (url.pathname === '/api/health' && req.method === 'GET') return json(res, { ok: true, aiConfigured: Boolean(API_KEY), jobsConfigured: HH_READY, jobsSource: 'HeadHunter API', agentMode: API_KEY ? 'AI-assisted' : 'rules-only', aiQuotaRemaining: Math.max(0, DAILY_AI_CALL_LIMIT - aiQuota.used), aiQuotaDisclaimer: 'Resets on restart; not a billing cap', accessRequired: Boolean(DEMO_ACCESS_CODE), version: VERSION });
+    if (url.pathname === '/api/health' && req.method === 'GET') return json(res, { ok: true, aiConfigured: Boolean(API_KEY), aiProvider: AI_PROVIDER, aiModel: API_KEY ? MODEL : null, jobsConfigured: HH_READY, jobsSource: 'HeadHunter API', agentMode: API_KEY ? 'AI-assisted' : 'rules-only', aiQuotaRemaining: Math.max(0, DAILY_AI_CALL_LIMIT - aiQuota.used), aiQuotaDisclaimer: 'Resets on restart; not a billing cap', accessRequired: Boolean(DEMO_ACCESS_CODE), version: VERSION });
     if (url.pathname === '/api/check-services' && req.method === 'GET') {
       if (!hasDemoAccess(req)) return json(res,{code:'ACCESS_DENIED'},401);
       if (!rateLimit(req, 8)) return json(res, {code:'RATE_LIMIT'},429);
@@ -266,7 +269,7 @@ const server = http.createServer(async (req, res) => {
         try { const probe = await fetchJobsData('Data Analyst', '160'); jobsStatus = 'connected'; sampledAt = probe.fetchedAt; }
         catch { jobsStatus = 'unavailable'; }
       }
-      return json(res, { aiStatus: API_KEY ? 'configured_unverified' : 'not_configured', jobsStatus, checkedAt: new Date().toISOString(), sampleTime: sampledAt, note: 'AI configured means a key is present, not that a paid model request succeeded.' });
+      return json(res, { aiStatus: API_KEY ? 'configured_unverified' : 'not_configured', aiProvider: AI_PROVIDER, jobsStatus, checkedAt: new Date().toISOString(), sampleTime: sampledAt, note: 'AI configured means a key is present, not that a paid model request succeeded.' });
     }
     if (url.pathname.startsWith('/api/')) {
       // Only same-origin browser POSTs are allowed. Third-party sites cannot consume paid AI quota.
