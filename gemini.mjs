@@ -31,6 +31,21 @@ export function geminiError(status,payload){
   if(status>=500)return 'AI_UPSTREAM';
   return 'AI_UPSTREAM';
 }
+// Log only provider diagnostics, never API keys, user messages or request bodies.
+// In Render Logs search for 'careerbrand_gemini_error'.
+function logGeminiFailure({model,status,payload,reason}) {
+  const raw=String(payload?.error?.message || '');
+  const excerpt=raw.slice(0,220)
+    .replace(/AIza[\w-]{10,}/g,'[REDACTED_KEY]')
+    .replace(/(?:api[_ -]?key|key)\s*[:=]\s*[^\s,;]+/gi,'key=[REDACTED]');
+  console.error('[careerbrand_gemini_error]',JSON.stringify({
+    model, httpStatus:status || null,
+    providerStatus:String(payload?.error?.status || '').slice(0,64) || null,
+    reason:reason || null,
+    providerMessage:excerpt || null,
+    finishReason:payload?.candidates?.[0]?.finishReason || null
+  }));
+}
 export async function generateGemini({apiKey,model,instructions,input,outputFormat,maxOutputTokens=900,timeoutMs=30000}){
   if(!/^[a-z0-9._-]+$/i.test(model))return {ok:false,code:'AI_MODEL_UNAVAILABLE'};
   const controller=new AbortController();
@@ -44,9 +59,15 @@ export async function generateGemini({apiKey,model,instructions,input,outputForm
       headers:{'Content-Type':'application/json','x-goog-api-key':apiKey},
       body:JSON.stringify(buildGeminiRequest({instructions,input,outputFormat,maxOutputTokens}))});
     const payload=await response.json().catch(()=>({}));
-    if(!response.ok)return {ok:false,code:geminiError(response.status,payload)};
+    if(!response.ok){logGeminiFailure({model,status:response.status,payload});return {ok:false,code:geminiError(response.status,payload)};}
     const txt=geminiText(payload);
-    return txt?{ok:true,text:txt}:{ok:false,code:payload?.promptFeedback?.blockReason?'AI_BLOCKED':'AI_EMPTY'};
-  }catch(e){return {ok:false,code:e.name==='AbortError'?'AI_TIMEOUT':'AI_NETWORK'};}
+    if(txt)return {ok:true,text:txt};
+    logGeminiFailure({model,status:response.status,payload,reason:'NO_TEXT_OUTPUT'});
+    return {ok:false,code:payload?.promptFeedback?.blockReason?'AI_BLOCKED':'AI_EMPTY'};
+  }catch(e){
+    const reason=e.name==='AbortError'?'TIMEOUT':'NETWORK_ERROR';
+    logGeminiFailure({model,reason});
+    return {ok:false,code:reason==='TIMEOUT'?'AI_TIMEOUT':'AI_NETWORK'};
+  }
   finally{clearTimeout(timer)}
 }
