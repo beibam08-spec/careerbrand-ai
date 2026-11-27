@@ -167,3 +167,22 @@ html[data-theme="light"] .quick-chip{color:#345fbc;background:#edf2ff;border-col
 .import-dataset-card{border-style:dashed}.import-dataset-card .btn-row{display:flex;gap:9px;flex-wrap:wrap}
 .import-dataset-card a.btn{text-decoration:none}
 @media(max-width:620px){.readiness-grid{grid-template-columns:1fr}}
+
+.chat-shell, .chat-body, .chat-controls, .draft-preview { min-width: 0 }
+.chat-body .bubble { overflow-wrap: anywhere; white-space: normal }
+.chat-body .bubble.user { white-space: pre-wrap }
+.chat-body .bubble p, .chat-body .bubble h4, .chat-body .bubble ul, .chat-body .bubble ol { margin: 0 0 .55em }
+.chat-body .bubble :last-child { margin-bottom: 0 }
+.chat-body .bubble ul, .chat-body .bubble ol { padding-inline-start: 1.4em }
+.chat-body .bubble code { font-size: .95em }
+.draft-preview { margin-top: 1.25rem; border-top: 1px solid var(--line); padding-top: 1rem }
+.draft-preview dt { font-weight: 700; margin-top: .75rem }
+.draft-preview dd { margin: .2rem 0 0; overflow-wrap: anywhere }
+.draft-conflict { border-inline-start: 2px solid currentColor; margin: .4rem 0; padding-inline-start: .7rem }
+.draft-conflict label { display: inline-flex; align-items: baseline; gap: .4rem }
+@media (max-width: 520px) {
+ .chat-body .bubble { max-width: 96% }
+ .draft-preview .btn-row { flex-wrap: wrap }
+}
+.chat-body .bubble pre { margin: 0 0 .55em; white-space: pre-wrap; overflow-wrap: anywhere }
+.chat-body .bubble a { color: inherit; text-decoration: underline }
