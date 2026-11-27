@@ -39,13 +39,13 @@ function devTools(socket) {
   });
 }
 
-const synthetic = '1-курс студентімін. Деректер талдаушысы болғым келеді. Excel білмеймін, бірақ Python білемін. Жобам: сату кестесін талдау.';
+const synthetic = '1-курс студентімін. Деректер талдаушысы болғым келеді. Python білемін. Python үйренуім керек пе? I have zero experience with Excel. Tech Cup алсам ше? Жобам: сату кестесін талдау.';
 const reply = '**Кәсіби түйіндеме**\n1. Қай мамандықта оқисың?\n2. Жоба нәтижесі қандай?\n[Resource](https://example.com/guide)\n[Blocked](javascript:alert(1))\n```\n<unsafe>\n```\n<img src=x onerror="window.__injected=true">';
 let failing = true;
 const fixture = await mockGemini(({generationConfig, contents}) => {
   if (generationConfig.responseSchema) return {text:JSON.stringify({
     ...emptyDraft, jobTitle:'Деректер талдаушысы', education:'1-курс студентімін',
-    skills:'Excel', projects:'сату кестесін талдау', experience:'Invented Corp'
+    skills:'Python, Excel', projects:'сату кестесін талдау', experience:'Invented Corp', achievements:'Tech Cup', professionalSummary:'Tech Cup'
   })};
   if (failing && contents.at(-1).parts[0].text.includes('Тексеру 503')) return {status:503};
   return {text:reply};
@@ -131,7 +131,8 @@ try {
   await click(action('generate-draft'));
   await wait(css(action('review-draft')), 'Generated CV preview did not appear');
   assert.match(await evaluate(`${css('.draft-preview')}.textContent`),/сату кестесін талдау/);
-  assert.doesNotMatch(await evaluate(`${css('.draft-preview')}.textContent`),/Invented Corp|Excel/);
+  assert.match(await evaluate(`${css('.draft-preview')}.textContent`),/Python/);
+  assert.doesNotMatch(await evaluate(`${css('.draft-preview')}.textContent`),/Invented Corp|Excel|Tech Cup/);
   assert.match(await evaluate(`${css('.cv-ai-section [role="status"]')}.textContent`),/Күмәнді немесе қайшы деректер/);
   await click(action('review-draft'));
   assert.match(await evaluate(`${css('.draft-conflict')}.textContent`),/Сақталған мамандық/);
@@ -141,7 +142,8 @@ try {
   await click(action('review-draft'));
   await click(action('confirm-draft'));
   await wait(css('#cv-paper'), 'CV editor did not open');
-  assert.equal(await evaluate(`${css('#field-skills')}.value`),'');
+  assert.equal(await evaluate(`${css('#field-skills')}.value`),'Python');
+  assert.equal(await evaluate(`${css('#field-achievements')}.value`),'');
   assert.equal(await evaluate(`${css('#field-name')}.value`),'Сақталған есім');
   assert.equal(await evaluate(`${css('#field-role')}.value`),'Сақталған мамандық');
   assert.equal(await evaluate(`${css('#field-experience')}.value`),'Сақталған тәжірибе');
@@ -164,7 +166,8 @@ try {
   const pdfText = execFileSync('pdftotext',[pdf,'-'],{encoding:'utf8'});
   assert.match(pdfText,/Junior Data Analyst/);
   assert.match(pdfText,/сату кестесін талдау/);
-  assert.doesNotMatch(pdfText,/Сохранить|Excel/);
+  assert.match(pdfText,/Python/);
+  assert.doesNotMatch(pdfText,/Сохранить|Excel|Tech Cup|Invented Corp/);
 
   await set('#language','en','change');
   await click('[data-page="assistant"]');

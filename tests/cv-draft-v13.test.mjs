@@ -182,6 +182,114 @@ test('CV draft endpoint requests clarification when proposed facts were denied',
   assert.deepEqual(await response.json(), {code:'CV_DRAFT_CLARIFICATION'});
 });
 
+const skillRegressions = [
+  {
+    lang:'kk',
+    assertion:'Python білемін.',
+    question:'Python үйренуім керек пе?',
+    zero:'Excel бойынша тәжірибем жоқ.',
+    mention:'Excel туралы мақала оқыдым.',
+    additive:'Мен Excel ғана емес, Python-ды да білемін.',
+    denial:'Python білмеймін.',
+    unrelated:'Python туралы кітап жазбадым.',
+    career:'Мен Acme-де жұмыс істедім. Мен Tech Cup жеңіп алдым.',
+    careerDenial:'Мен Acme-де жұмыс істемедім. Мен Tech Cup жеңіп алмадым.',
+    careerQuestion:'Acme-де жұмыс істеуге бола ма? Tech Cup алсам ше?'
+  },
+  {
+    lang:'ru',
+    assertion:'Знаю Python.',
+    question:'Стоит ли мне изучать Python?',
+    zero:'У меня ноль опыта работы с Excel.',
+    mention:'Прочитал статью про Excel.',
+    additive:'Я знаю не только Excel, но и Python.',
+    denial:'Я не знаю Python.',
+    unrelated:'Я не написал книгу о Python.',
+    career:'Я работал в Acme. Я выиграл Tech Cup.',
+    careerDenial:'Я не работал в Acme. Я не выиграл Tech Cup.',
+    careerQuestion:'Стоит ли мне работать в Acme? Что если я выиграю Tech Cup?'
+  },
+  {
+    lang:'en',
+    assertion:'I know Python.',
+    question:'Should I learn Python?',
+    zero:'I have zero experience with Excel.',
+    mention:'I read an article about Excel.',
+    additive:'I know not only Excel but also Python.',
+    denial:'I don’t know Python.',
+    unrelated:'I did not write a book about Python.',
+    career:'I worked at Acme. I won the Tech Cup.',
+    careerDenial:'I never worked for Acme. I didn’t win the Tech Cup.',
+    careerQuestion:'Should I work at Acme? What if I win the Tech Cup?'
+  }
+];
+
+for (const sample of skillRegressions) {
+  const verify = (values, ...messages) => validateCVDraft(
+    JSON.stringify({...emptyDraft, education:'First-year student', projects:'Weather dashboard', ...values}),
+    ['First-year student. Weather dashboard.', ...messages],
+    sample.lang
+  );
+
+  test(`${sample.lang}: skills need affirmative evidence and exclude zero experience`, () => {
+    const result = verify({skills:'Python, Excel', professionalSummary:'Excel'}, sample.assertion, sample.zero);
+    assert.equal(result.draft.skills, 'Python');
+    assert.equal(result.needsClarification, true);
+    assert.doesNotMatch(result.draft.professionalSummary, /Excel/);
+    assert.equal(verify({skills:'Excel'}, sample.mention).draft.skills, '');
+    assert.equal(verify({skills:'Excel'}, sample.zero).draft.skills, '');
+  });
+
+  test(`${sample.lang}: questions and unrelated denials preserve skills, direct contradiction does not`, () => {
+    const candidate = {skills:'Python'};
+    assert.equal(verify(candidate, sample.question).draft.skills, '');
+    assert.equal(verify(candidate, sample.assertion, sample.question).draft.skills, 'Python');
+    assert.equal(verify(candidate, sample.assertion, sample.unrelated).draft.skills, 'Python');
+    const conflict = verify(candidate, sample.assertion, sample.denial);
+    assert.equal(conflict.draft.skills, '');
+    assert.equal(conflict.needsClarification, true);
+  });
+
+  test(`${sample.lang}: additive conjunction confirms both skills and keeps independent claims`, () => {
+    assert.equal(verify({skills:'Excel, Python'}, sample.additive).draft.skills, 'Excel, Python');
+    assert.equal(verify({skills:'Excel, Python'}, sample.additive, sample.denial).draft.skills, 'Excel');
+    assert.equal(verify({skills:'PythonScript'}, sample.assertion).draft.skills, '');
+  });
+
+  test(`${sample.lang}: career fields require self-reports and reject actual contradictions`, () => {
+    const candidate = {experience:'Acme', achievements:'Tech Cup'};
+    for (const messages of [
+      ['A news article about Acme and Tech Cup.'],
+      [sample.careerQuestion],
+      [sample.career, sample.careerDenial]
+    ]) {
+      const {draft} = verify(candidate, ...messages);
+      assert.equal(draft.experience, '');
+      assert.equal(draft.achievements, '');
+    }
+    const {draft} = verify(candidate, sample.career, sample.careerQuestion);
+    assert.equal(draft.experience, 'Acme');
+    assert.equal(draft.achievements, 'Tech Cup');
+  });
+}
+
+test('CV endpoint retains affirmative evidence when the requested output and conversation languages differ', async t => {
+  const fixture = await mockGemini(() => ({
+    text:JSON.stringify({...emptyDraft, education:'First-year student', skills:'Python, Excel'})
+  }));
+  t.after(fixture.stop);
+  const response = await post(fixture.base, '/api/cv-draft', {
+    consent:true, lang:'kk', messages:[
+      'First-year student. I know Python. Should I learn Python? I have zero experience with Excel.'
+    ]
+  });
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.draft.skills, 'Python');
+  assert.equal(result.needsClarification, true);
+  assert.match(result.draft.professionalSummary, /Дағдылары: Python/);
+});
+
 test('Gemini distinguishes provider errors and retries overload only within its budget', async t => {
   const statuses = [[400,'AI_PROVIDER_BAD_REQUEST'],[401,'AI_KEY_INVALID'],[403,'AI_PROVIDER_FORBIDDEN'],
     [404,'AI_MODEL_UNAVAILABLE'],[429,'AI_RATE_LIMIT'],[500,'AI_UPSTREAM'],[503,'AI_BUSY']];
