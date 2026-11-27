@@ -151,7 +151,7 @@ async function draftCV(req, res) {
   if (!result.ok) return aiFailure(res, result.code);
   const outcome = validateCVDraft(result.text, messages, lang);
   if (!outcome.draft) return json(res, outcome, outcome.code === 'CV_DRAFT_INVALID' ? 502 : 422);
-  return json(res, {draft:outcome.draft, lang});
+  return json(res, {...outcome, lang});
 }
 
 async function reviewCV(req,res){

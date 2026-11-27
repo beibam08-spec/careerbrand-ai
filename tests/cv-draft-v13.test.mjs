@@ -75,6 +75,113 @@ test('a quoted fragment cannot reverse an explicit denial of employment', () => 
   assert.equal(draft.experience,'');
 });
 
+const localizedEvidence = [
+  {
+    lang:'kk',
+    confirmed:'1-курс студентімін. Жобам: ауа райы кестесін талдау.',
+    denies:'Excel білмеймін. Data Analyst болғым келмейді. Мен Google-да жұмыс істемедім.',
+    contrast:'Excel білмеймін, бірақ Python білемін.',
+    example:'Мысалы: Excel білемін.\nGoogle-да жұмыс істедім.\nData Analyst болғым келеді.',
+    quoted:'Мысалы, «Excel білемін. Google-да жұмыс істедім».',
+    conditional:'Егер Excel білсем, Google-да жұмыс істер едім.',
+    question:'Excel маған керек пе?',
+    goals:['Data Analyst болғым келеді.', 'Менің мақсатым — UX Designer.'],
+    withdrawal:'Бұл дұрыс емес.'
+  },
+  {
+    lang:'ru',
+    confirmed:'Учусь на первом курсе. Проект: анализ таблицы погоды.',
+    denies:'Не знаю Excel. Не хочу стать Data Analyst. Я не работал в Google.',
+    contrast:'Не знаю Excel, но знаю Python.',
+    example:'Например: знаю Excel.\nРаботал в Google.\nХочу стать Data Analyst.',
+    quoted:'Например, «знаю Excel. Работал в Google».',
+    conditional:'Если бы я знал Excel, работал бы в Google.',
+    question:'Стоит ли мне изучать Excel?',
+    goals:['Хочу стать Data Analyst.', 'Моя цель — UX Designer.'],
+    withdrawal:'Это неправда.'
+  },
+  {
+    lang:'en',
+    confirmed:'I am a first-year student. My project is analyzing a weather table.',
+    denies:'I don’t know Excel. I do not want to be a Data Analyst. I never worked at Google.',
+    contrast:'I do not know Excel, but I know Python.',
+    example:'Sample CV: I know Excel.\nI worked at Google.\nI want to be a Data Analyst.',
+    quoted:'For example, “I know Excel. I worked at Google.”',
+    conditional:'If I knew Excel, I would work at Google.',
+    question:'Should I learn Excel?',
+    goals:['I want to be a Data Analyst.', 'My career goal is UX Designer.'],
+    withdrawal:'Correction: that was wrong.'
+  }
+];
+
+for (const sample of localizedEvidence) {
+  const [education, projects] = sample.confirmed.split('. ');
+  const verify = (values, ...messages) => validateCVDraft(
+    JSON.stringify({...emptyDraft, education, projects, ...values}),
+    [sample.confirmed, ...messages],
+    sample.lang
+  );
+
+  test(`${sample.lang}: denials cannot become skills, career goals, or employment`, () => {
+    const {draft, needsClarification} = verify({
+      skills:'Excel', jobTitle:'Data Analyst', experience:'Google', professionalSummary:'Excel'
+    }, sample.denies);
+    assert.equal(needsClarification, true);
+    for (const field of ['skills','jobTitle','experience']) {
+      assert.equal(draft[field], '', field);
+    }
+    assert.doesNotMatch(draft.professionalSummary, /Excel|Google|Data Analyst/);
+    assert.ok(draft.professionalSummary.includes(education));
+    assert.equal(draft.education, education);
+    assert.equal(draft.projects, projects);
+    assert.equal(verify({skills:'Python'}, sample.contrast).draft.skills, 'Python');
+  });
+
+  test(`${sample.lang}: examples, questions, and conditions are not evidence`, () => {
+    const {draft, needsClarification} = verify({
+      skills:'Excel', jobTitle:'Data Analyst', experience:'Google'
+    }, sample.example);
+    assert.equal(needsClarification, true);
+    assert.equal(draft.skills, '');
+    assert.equal(draft.jobTitle, '');
+    assert.equal(draft.experience, '');
+    assert.equal(verify({experience:'Google'}, sample.quoted).draft.experience, '');
+    assert.equal(verify({skills:'Excel', experience:'Google'}, sample.conditional).draft.experience, '');
+    assert.equal(verify({skills:'Excel'}, sample.question).draft.skills, '');
+  });
+
+  test(`${sample.lang}: later contradictions suppress matching claims and summary text`, () => {
+    const {draft, needsClarification} = verify({
+      skills:'Excel, Python', jobTitle:'Data Analyst', experience:'Google'
+    }, 'Excel, Python. Data Analyst. Google.', sample.denies.toUpperCase());
+    assert.equal(needsClarification, true);
+    assert.equal(draft.skills, '');
+    assert.equal(draft.jobTitle, '');
+    assert.equal(draft.experience, '');
+
+    const {draft: conflictingGoals} = verify({
+      jobTitle:'Data Analyst', professionalSummary:sample.goals[0]
+    }, ...sample.goals);
+    assert.equal(conflictingGoals.jobTitle, '');
+    assert.doesNotMatch(conflictingGoals.professionalSummary, /Data Analyst|UX Designer/);
+
+    assert.equal(verify({jobTitle:'Data Analyst'}, sample.goals[0], sample.withdrawal).draft.jobTitle, '');
+    assert.equal(verify({jobTitle:'Data Analyst'}, sample.goals[0], sample.goals[0]).draft.jobTitle, 'Data Analyst');
+  });
+}
+
+test('CV draft endpoint requests clarification when proposed facts were denied', async t => {
+  const fixture = await mockGemini(() => ({
+    text:JSON.stringify({...emptyDraft, jobTitle:'Data Analyst', skills:'Excel'})
+  }));
+  t.after(fixture.stop);
+  const response = await post(fixture.base, '/api/cv-draft', {
+    consent:true, lang:'kk', messages:[localizedEvidence[0].denies]
+  });
+  assert.equal(response.status, 422);
+  assert.deepEqual(await response.json(), {code:'CV_DRAFT_CLARIFICATION'});
+});
+
 test('Gemini distinguishes provider errors and retries overload only within its budget', async t => {
   const statuses = [[400,'AI_PROVIDER_BAD_REQUEST'],[401,'AI_KEY_INVALID'],[403,'AI_PROVIDER_FORBIDDEN'],
     [404,'AI_MODEL_UNAVAILABLE'],[429,'AI_RATE_LIMIT'],[500,'AI_UPSTREAM'],[503,'AI_BUSY']];

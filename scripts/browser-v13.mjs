@@ -39,13 +39,13 @@ function devTools(socket) {
   });
 }
 
-const synthetic = '1-курс студентімін. Деректер талдаушысы болғым келеді. Excel, Python білемін. Жобам: сату кестесін талдау.';
+const synthetic = '1-курс студентімін. Деректер талдаушысы болғым келеді. Excel білмеймін, бірақ Python білемін. Жобам: сату кестесін талдау.';
 const reply = '**Кәсіби түйіндеме**\n1. Қай мамандықта оқисың?\n2. Жоба нәтижесі қандай?\n[Resource](https://example.com/guide)\n[Blocked](javascript:alert(1))\n```\n<unsafe>\n```\n<img src=x onerror="window.__injected=true">';
 let failing = true;
 const fixture = await mockGemini(({generationConfig, contents}) => {
   if (generationConfig.responseSchema) return {text:JSON.stringify({
     ...emptyDraft, jobTitle:'Деректер талдаушысы', education:'1-курс студентімін',
-    skills:'Excel, Python', projects:'сату кестесін талдау', experience:'Invented Corp'
+    skills:'Excel', projects:'сату кестесін талдау', experience:'Invented Corp'
   })};
   if (failing && contents.at(-1).parts[0].text.includes('Тексеру 503')) return {status:503};
   return {text:reply};
@@ -131,7 +131,8 @@ try {
   await click(action('generate-draft'));
   await wait(css(action('review-draft')), 'Generated CV preview did not appear');
   assert.match(await evaluate(`${css('.draft-preview')}.textContent`),/сату кестесін талдау/);
-  assert.doesNotMatch(await evaluate(`${css('.draft-preview')}.textContent`),/Invented Corp/);
+  assert.doesNotMatch(await evaluate(`${css('.draft-preview')}.textContent`),/Invented Corp|Excel/);
+  assert.match(await evaluate(`${css('.cv-ai-section [role="status"]')}.textContent`),/Күмәнді немесе қайшы деректер/);
   await click(action('review-draft'));
   assert.match(await evaluate(`${css('.draft-conflict')}.textContent`),/Сақталған мамандық/);
   assert.equal(await evaluate(`${css('[data-draft-replace="role"]')}.checked`),false);
@@ -140,6 +141,7 @@ try {
   await click(action('review-draft'));
   await click(action('confirm-draft'));
   await wait(css('#cv-paper'), 'CV editor did not open');
+  assert.equal(await evaluate(`${css('#field-skills')}.value`),'');
   assert.equal(await evaluate(`${css('#field-name')}.value`),'Сақталған есім');
   assert.equal(await evaluate(`${css('#field-role')}.value`),'Сақталған мамандық');
   assert.equal(await evaluate(`${css('#field-experience')}.value`),'Сақталған тәжірибе');
@@ -162,7 +164,7 @@ try {
   const pdfText = execFileSync('pdftotext',[pdf,'-'],{encoding:'utf8'});
   assert.match(pdfText,/Junior Data Analyst/);
   assert.match(pdfText,/сату кестесін талдау/);
-  assert.doesNotMatch(pdfText,/Сохранить/);
+  assert.doesNotMatch(pdfText,/Сохранить|Excel/);
 
   await set('#language','en','change');
   await click('[data-page="assistant"]');
@@ -181,7 +183,7 @@ try {
   await click('[data-page="media"]');
   assert.match(await evaluate(`${css('.promo-video source')}.src`),/careerbrand-intro\.mp4$/);
 
-  console.log('Chromium passed: 503, editable chat, retry, safe Markdown, clear, consent, draft, conflict protection, persistent CV edits, PDF text, 390px layout, languages, theme, portfolio and media.');
+  console.log('Chromium passed: 503, editable chat, retry, safe Markdown, clear, consent, draft, denied fact exclusion, conflict protection, persistent CV edits, PDF text, 390px layout, languages, theme, portfolio and media.');
 } finally {
   socket?.close();
   if (browser.pid && browser.exitCode===null && browser.signalCode===null) {

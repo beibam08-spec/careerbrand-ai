@@ -81,6 +81,7 @@ const CV_DRAFT_TEXT = {
   chatSendPrivacy:'Жіберу батырмасы осы әңгімедегі хабарламаларды жауап алу үшін ЖИ қызметіне жібереді.',
   errorBAD_MESSAGES:'Енгізілген мәтінді тексеріп, қайта жібер.',
   errorCV_DRAFT_INSUFFICIENT:'Мәлімет жеткіліксіз. Мақсатты мамандығың, білімің, дағдыларың немесе жобаларың туралы көбірек жаз.',
+  errorCV_DRAFT_CLARIFICATION:'Күмәнді немесе қайшы деректер жобаға енгізілмеді. Расталған мәліметтерді жаңа әңгімеде нақтылап жазып, жобаны қайта жаса.',
   errorCV_DRAFT_INVALID:'Gemini жарамды түйіндеме құрылымын қайтармады. Қайта жасап көр.',
   errorCV_GEMINI_REQUIRED:'Түйіндеме жобасын жасау үшін серверде Gemini таңдалуы керек.',
   errorCONSENT_REQUIRED:'Түйіндеме жасау үшін мәлімет жіберуге келісім бер.',
@@ -104,6 +105,7 @@ const CV_DRAFT_TEXT = {
   chatSendPrivacy:'Кнопка отправки передаёт сообщения диалога сервису ИИ для подготовки ответа.',
   errorBAD_MESSAGES:'Проверьте введённый текст и отправьте его снова.',
   errorCV_DRAFT_INSUFFICIENT:'Данных пока мало. Расскажите подробнее о желаемой должности, образовании, навыках или проектах.',
+  errorCV_DRAFT_CLARIFICATION:'Сомнительные или противоречивые сведения пропущены. Укажите подтверждённые данные в новом диалоге и создайте черновик снова.',
   errorCV_DRAFT_INVALID:'Gemini вернул черновик в неверном формате. Попробуйте создать его снова.',
   errorCV_GEMINI_REQUIRED:'Для создания черновика на сервере должен быть выбран Gemini.',
   errorCONSENT_REQUIRED:'Дайте согласие на отправку сообщений для создания резюме.',
@@ -127,6 +129,7 @@ const CV_DRAFT_TEXT = {
   chatSendPrivacy:'Sending a message shares this conversation with the AI service so it can reply.',
   errorBAD_MESSAGES:'Check the message text and send it again.',
   errorCV_DRAFT_INSUFFICIENT:'More details are needed. Tell the adviser about your target role, education, skills or projects.',
+  errorCV_DRAFT_CLARIFICATION:'Unclear or conflicting details were left out. State the confirmed facts in a new conversation and generate the draft again.',
   errorCV_DRAFT_INVALID:'Gemini returned a draft in an invalid format. Generate it again.',
   errorCV_GEMINI_REQUIRED:'The server must use Gemini to generate CV drafts.',
   errorCONSENT_REQUIRED:'Consent is required to send messages for CV generation.',
@@ -397,6 +400,7 @@ function draftPanel() {
   <button class="btn" data-action="generate-draft" ${draftBusy||chatBusy?'disabled':''}>${tr('draftGenerate')}</button>
   ${draftBusy?`<p role="status"><span class="spinner" aria-hidden="true"></span> ${tr('draftLoading')}</p>`:''}
   ${draftError?`<p role="alert" class="notice warning">${esc(apiError(draftError))}</p>`:''}
+  ${cvDraft?.needsClarification?`<p role="status" class="notice warning">${tr('errorCV_DRAFT_CLARIFICATION')}</p>`:''}
   ${entries.length?`<div class="draft-preview">
    <h3>${tr('draftPreview')}</h3>
    ${draftReview?`<p class="notice">${tr('draftReview')}</p>`:''}
