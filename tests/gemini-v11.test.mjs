@@ -19,7 +19,7 @@ test('Gemini request preserves separate system instructions, chat turns and CV J
  assert.equal(req.generationConfig.responseSchema.properties.strengths.items.type,'STRING');
  assert.equal(geminiText({candidates:[{content:{parts:[{text:'Қазақша жауап'}]}}]}),'Қазақша жауап');
  assert.equal(geminiError(429,{}),'AI_RATE_LIMIT');
- assert.equal(geminiError(403,{}),'AI_KEY_INVALID');
+ assert.equal(geminiError(403,{}),'AI_PROVIDER_FORBIDDEN');
 });
 
 test('Gemini API is server-side, protected and can review CV, chat, probe and analyze synthetic vacancies',async()=>{
@@ -36,7 +36,7 @@ test('Gemini API is server-side, protected and can review CV, chat, probe and an
  const {base,ps}=await app({AI_PROVIDER:'gemini',GEMINI_API_KEY:'mock-gemini-key-not-real',GEMINI_MODEL:'gemini-3.5-flash-lite',DEMO_ACCESS_CODE:secret,TEST_GEMINI_ENDPOINT:addr(mock)+'/v1beta/models/fake:generateContent'});
  try{
   const health=await(await fetch(base+'/api/health')).json();
-  assert.equal(health.aiProvider,'gemini');assert.equal(health.version,'11.0.0');assert.equal(health.aiConfigured,true);
+  assert.equal(health.aiProvider,'gemini');assert.equal(health.version,'13.0.0');assert.equal(health.aiConfigured,true);
   assert.equal(health.aiModel,'gemini-3.5-flash-lite');
   const denied=await post(base+'/api/chat',{messages:[{role:'user',content:'Сәлем'}]},'incorrect-secret');
   assert.equal(denied.status,401);assert.equal(requests.length,0);

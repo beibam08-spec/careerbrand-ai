@@ -67,7 +67,7 @@ try{
   await check('Server health reports status, source, and version',async()=>{
     const r=await fetchWithTimeout('/api/health');assert(r.status===200,'health HTTP '+r.status);
     const d=await r.json();assert(d.ok===true,'health.ok is not true');
-    assert(typeof d.version==='string'&&d.version.startsWith('11.'),'unexpected version');
+    assert(typeof d.version==='string'&&d.version.startsWith('13.'),'unexpected version');
     assert(typeof d.aiConfigured==='boolean','missing AI configuration status');
     assert(typeof d.jobsConfigured==='boolean','missing jobs configuration status');
   });
